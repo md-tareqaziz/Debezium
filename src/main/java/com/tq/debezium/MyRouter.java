@@ -45,7 +45,7 @@ public class MyRouter extends RouteBuilder {
                 + "&tableWhitelist={{database.schema}}.{{database.table}}"
                 + "&offsetStorageFileName=D:\\offset.dat"
                 + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore"
-                + "&offsetStorageTopic=quickstart-events"
+                + "&offsetStorageTopic="+TOPIC
                 + "&offsetFlushIntervalMs=1000"
                 + "&pluginName=pgoutput")
                 .log("---------------Event Log---------------")
@@ -85,7 +85,7 @@ public class MyRouter extends RouteBuilder {
                         json += (i != User.class.getDeclaredFields().length - 1) ? "," : "}";
                     }
 
-                    kafkaTemplate.send(TOPIC, json);
+//                    kafkaTemplate.send(TOPIC, json);
 //                    BeanUtils.copyProperties(bodyValue,user);
                     User user= objectMapper.readValue(json, new TypeReference<User>(){});
 
