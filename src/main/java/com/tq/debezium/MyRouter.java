@@ -48,7 +48,8 @@ public class MyRouter extends RouteBuilder {
                 + "&databaseDbname={{database.dbname}}"
                 + "&databaseServerName=postgress_server"
                 + "&schemaWhitelist={{database.schema}}"
-                + "&tableWhitelist={{database.schema}}.{{database.table}}"
+//                + "&tableWhitelist={{database.schema}}.{{database.table}}"
+                + "&tableIncludeList={{database.schema}}.{{database.table}}"
                 + "&offsetStorageFileName=D:\\offset.dat"
 //                + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore"
 //                + "&offsetStorageTopic="+TOPIC
