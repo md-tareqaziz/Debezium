@@ -53,6 +53,7 @@ public class MyRouter extends RouteBuilder {
                 + "&offsetStorageFileName=D:\\offset.dat"
 //                + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore"
 //                + "&offsetStorageTopic="+TOPIC
+//                + "&publicationName=dbz_publication2"
                 + "&offsetFlushIntervalMs=1000"
                 + "&pluginName=pgoutput")
                 .log("---------------Event Log---------------")
