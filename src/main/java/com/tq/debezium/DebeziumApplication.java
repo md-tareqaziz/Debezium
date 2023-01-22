@@ -12,7 +12,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 @SpringBootApplication
 public class DebeziumApplication {
     @Autowired
-    private KafkaTemplate<String, String> kafkaTemplate;
+    MyRouter myRouter;
 
     public static void main(String[] args) throws Exception {
         SpringApplication.run(DebeziumApplication.class, args);
@@ -21,13 +21,10 @@ public class DebeziumApplication {
     @Bean
     public void debezium() throws Exception {
         CamelContext camelContext = new DefaultCamelContext();
-        camelContext.addRoutes(new MyRouter(kafkaTemplate));
+//        camelContext.addRoutes(new MyRouter(kafkaTemplate));
+        camelContext.addRoutes(myRouter);
         // Start the routes
         camelContext.start();
-        // Consume messages forever
-        while (true) {
-            Thread.sleep(1000);
-        }
     }
 
 }

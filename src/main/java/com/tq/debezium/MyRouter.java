@@ -1,31 +1,37 @@
 package com.tq.debezium;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.NoArgsConstructor;
 import org.apache.camel.Configuration;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.spi.PropertiesComponent;
-import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.sql.Date;
-import java.util.Set;
+import java.util.Map;
 
+@Service
+@Configurable
 @Configuration
 @NoArgsConstructor
 public class MyRouter extends RouteBuilder {
-
+    @Autowired
+    AuditRepository auditRepository;
     private KafkaTemplate<String, String> kafkaTemplate;
     private static final String TOPIC = "quickstart-events";
 
     public MyRouter(KafkaTemplate<String, String> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
+    }
+
+    @Autowired
+    public MyRouter(AuditRepository auditRepository) {
+        this.auditRepository = auditRepository;
     }
 
     @Override
@@ -44,8 +50,8 @@ public class MyRouter extends RouteBuilder {
                 + "&schemaWhitelist={{database.schema}}"
                 + "&tableWhitelist={{database.schema}}.{{database.table}}"
                 + "&offsetStorageFileName=D:\\offset.dat"
-                + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore"
-                + "&offsetStorageTopic="+TOPIC
+//                + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore"
+//                + "&offsetStorageTopic="+TOPIC
                 + "&offsetFlushIntervalMs=1000"
                 + "&pluginName=pgoutput")
                 .log("---------------Event Log---------------")
@@ -66,11 +72,25 @@ public class MyRouter extends RouteBuilder {
                         "\"after\":\"${headers.CamelDebeziumAfter}\"" +
                         "}\"")
                 .process(exchange -> {
-                    final Struct bodyValue = exchange.getIn().getBody(Struct.class);
-                    final String bodyValue1 = "${headers.CamelDebeziumAfter}";
-                    final Schema schemaValue = bodyValue.schema();
+                    Map<String, Object> map = exchange.getMessage().getHeaders();
+                    Map<String, Object> metaData = (Map<String, Object>) map.get("CamelDebeziumSourceMetadata");
 
+                    Long time = (Long) map.get("CamelDebeziumTimestamp");
+                    String db = (String) metaData.get("db");
+                    String scheme = (String) metaData.get("schema");
+                    String table = (String) metaData.get("table");
+                    String operation = (String) map.get("CamelDebeziumOperation");
+                    Struct after = exchange.getIn().getBody(Struct.class);
+                    Struct before = (Struct) map.get("CamelDebeziumBefore");
+                    Struct bodyValue = exchange.getIn().getBody(Struct.class);
 
+                    Audit audit = new Audit();
+                    audit.setDb(db);
+                    audit.setTable(db);
+                    audit.setBefore(before.toString());
+                    audit.setAfter(after.toString());
+
+                    auditRepository.save(audit);
 
                     String json = "{";
                     for (int i = 0; i < User.class.getDeclaredFields().length; i++) {
@@ -87,10 +107,8 @@ public class MyRouter extends RouteBuilder {
 
 //                    kafkaTemplate.send(TOPIC, json);
 //                    BeanUtils.copyProperties(bodyValue,user);
-                    User user= objectMapper.readValue(json, new TypeReference<User>(){});
 
                     log.info("Body value is :" + json);
-                    log.info("With Schema : " + objectMapper.writeValueAsString(user));
 //                    log.info("And fields:" + bodyValue.getStruct("type"));
                     log.info("And fields:" + bodyValue);
 //                    log.info("And fields of :" + schemaValue.doc());
