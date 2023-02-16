@@ -15,3 +15,4 @@ Some useful DB queries are:
     ALTER TABLE table_name REPLICA IDENTITY FULL;
     CREATE PUBLICATION dbz_publication2 FOR TABLE table1,table2,table3;
     CREATE ROLE name REPLICATION LOGIN;
+    alter PUBLICATION dbz_publication2 add table profile_shift;
